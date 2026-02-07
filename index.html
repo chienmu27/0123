@@ -1,121 +1,196 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>訂單查詢系統</title>
-    <style>
-        :root { --primary: #4285f4; --bg: #f8f9fa; --card: #fff; --text: #333; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); padding: 15px; color: var(--text); margin: 0; }
-        .container { max-width: 450px; margin: 40px auto; }
-        .search-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
-        h3 { margin-top: 0; color: var(--primary); font-size: 1.5rem; margin-bottom: 10px;}
-        input[type="text"] { width: 100%; box-sizing: border-box; padding: 12px; margin: 15px 0; border: 2px solid #eee; border-radius: 8px; font-size: 18px; text-align: center; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--primary); }
-        button { background: var(--primary); color: white; border: none; padding: 12px 0; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.3s; }
-        button:hover { background: #3367d6; box-shadow: 0 4px 10px rgba(66,133,244,0.3); }
-        #resultArea { display: none; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); overflow: hidden; margin-top: 20px; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .data-row { display: flex; border-bottom: 1px solid #f0f0f0; padding: 15px; align-items: center; justify-content: space-between; }
-        .data-row:last-child { border-bottom: none; }
-        .data-label { color: #555; font-weight: bold; font-size: 14px; flex-shrink: 0; }
-        .data-value { color: #222; font-size: 15px; word-break: break-all; text-align: right; margin-left: 10px; }
-        #loading { display: none; margin-top: 15px; color: #666; font-size: 14px; }
-        .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; margin-right: 8px; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        /* 針對手機優化 */
-        @media (max-width: 480px) {
-            .container { margin: 10px auto; }
-            .search-box { padding: 20px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社團網頁點名簿 (密碼版)</title>
+  <style>
+    /* ... (保留原本的 CSS) ... */
+    body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h2 { text-align: center; margin-bottom: 25px; color: #1a73e8; }
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; transition: 0.2s; }
+    .club-btn { background-color: #e8f0fe; color: #1967d2; border: 1px solid #d2e3fc; }
+    .club-btn:hover { background-color: #d2e3fc; }
+    .submit-btn { background-color: #34a853; color: white; width: 100%; font-size: 18px; margin-top: 15px; font-weight: bold; }
+    .submit-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+    .date-section, .password-section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+    input[type="date"], input[type="password"] { padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; width: 80%; }
+    .student-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+    .student-item label { margin-left: 15px; cursor: pointer; flex-grow: 1; font-size: 16px; }
+    #status { text-align: center; margin-top: 15px; font-weight: bold; min-height: 24px; }
+    .hidden { display: none; }
+    .loading-spinner { text-align: center; color: #666; padding: 20px; }
+  </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="search-box">
-        <h3>🔍 訂單進度查詢</h3>
-        <p style="font-size:14px; color:#888; margin: 0;">請輸入「匯款帳號後五碼」進行查詢</p>
-        
-        <input type="text" id="verifyCode" placeholder="請輸入 5 位數字" maxlength="5" pattern="\d*" inputmode="numeric">
-        
-        <button id="submitBtn">送出查詢</button>
-        
-        <div id="loading">
-            <div class="spinner"></div> 正在連線資料庫...
-        </div>
+  <h2 id="mainTitle">社團點名系統</h2>
+  
+  <div id="clubSelection">
+    <p style="text-align:center;">正在讀取社團清單...</p>
+    <div id="clubButtons" class="btn-group"></div>
+  </div>
+
+  <div id="attendancePage" class="hidden">
+    <button onclick="backToClubs()" style="background:#dadce0; color:#3c4043; margin-bottom:15px;">← 返回選擇社團</button>
+    <h3 id="selectedClubName" style="margin-bottom:10px;"></h3>
+    
+    <div class="date-section">
+      <label>上課日期：</label>
+      <input type="date" id="attendanceDate">
     </div>
 
-    <div id="resultArea"></div>
+    <div id="studentListContainer">
+      <div id="listStatus" class="loading-spinner">載入中...</div>
+      <div id="studentList"></div>
+    </div>
+
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+    <div class="password-section">
+      <label>請輸入社團密碼：</label><br><br>
+      <input type="password" id="clubPassword" placeholder="輸入密碼以送出">
+    </div>
+
+    <button id="submitBtn" class="submit-btn" onclick="submit()" disabled>確認送出點名</button>
+    <div id="status"></div>
+  </div>
 </div>
 
 <script>
-    // ▼▼▼ 請在此處填入你部署後的 GAS 網址 ▼▼▼
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0iizobr8b5fQrPR5DXtDwyBxlfhrut_iLBloSIfEDTOZGf0zUyCmQ4vZDF-vJZLP1/exec"; 
+  // ⚠️ 請填入你的 GAS Web App URL
+  const API_URL = "https://script.google.com/macros/s/AKfycbxmsOqcNUANYQAXoUuwVHwNqxC7rUAhEgjpgX9dmx6SxRg98PepWvq8jTh5lT0gABLe/exec";
 
-    const btn = document.getElementById('submitBtn');
-    const input = document.getElementById('verifyCode');
+  let currentClub = "";
 
-    // 支援按 Enter 送出
-    input.addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            btn.click();
-        }
-    });
+  window.onload = () => {
+    fetchClubs();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('attendanceDate').value = today;
+    document.getElementById('attendanceDate').addEventListener('change', loadStudents);
+  };
 
-    btn.addEventListener('click', async () => {
-        const code = input.value.trim();
-        const resultArea = document.getElementById('resultArea');
-        const loading = document.getElementById('loading');
-        
-        if (code.length < 5) { alert("請輸入完整的 5 位數字"); return; }
-        
-        // 重置介面
-        resultArea.style.display = 'none';
-        resultArea.innerHTML = '';
-        loading.style.display = 'block';
-        btn.disabled = true; // 防止重複點擊
-
-        try {
-            // 使用 GET 方法並將參數帶在 URL 後面
-            // 注意：這裡使用 text/plain 是為了繞過 Google 的一些預檢請求，但主要是靠後端 JSONP 或直接回傳 JSON
-            const targetUrl = `${SCRIPT_URL}?code=${encodeURIComponent(code)}`;
-            
-            const response = await fetch(targetUrl);
-            
-            // Google Apps Script 的 redirect 有時會導致 ok 為 false，但實際上有資料
-            // 不過使用 GET + createTextOutput 通常是穩定的
-            
-            if (!response.ok) throw new Error("網路回應異常");
-            
-            const res = await response.json();
-
-            if (res.status === 'success') {
-                renderResult(res.data);
-                resultArea.style.display = 'block';
-                input.value = ''; // 查詢成功後清空
-            } else {
-                alert(res.message);
-            }
-        } catch (err) {
-            console.error(err);
-            alert("查詢失敗：請檢查網路連線，或確認 GAS 網址是否正確且權限已設為「所有人」。");
-        } finally {
-            loading.style.display = 'none';
-            btn.disabled = false;
-        }
-    });
-
-    function renderResult(data) {
-        const container = document.getElementById('resultArea');
-        container.innerHTML = data.map(item => `
-            <div class="data-row">
-                <div class="data-label">${item.label}</div>
-                <div class="data-value">${(item.value !== "" && item.value !== null) ? item.value : "-"}</div>
-            </div>
-        `).join('');
+  async function fetchClubs() {
+    try {
+      const resp = await fetch(`${API_URL}?action=getClubList`);
+      const clubs = await resp.json();
+      const container = document.getElementById('clubButtons');
+      container.innerHTML = "";
+      clubs.forEach(club => {
+        let btn = document.createElement('button');
+        btn.className = "club-btn";
+        btn.innerText = club;
+        btn.onclick = () => selectClub(club);
+        container.appendChild(btn);
+      });
+      document.querySelector('#clubSelection p').classList.add('hidden');
+    } catch (e) {
+      alert("無法連線至 API。");
     }
+  }
+
+  function selectClub(club) {
+    currentClub = club;
+    document.getElementById('clubPassword').value = ""; // 清空上次密碼
+    document.getElementById('clubSelection').classList.add('hidden');
+    document.getElementById('attendancePage').classList.remove('hidden');
+    document.getElementById('selectedClubName').innerText = "社團：" + club;
+    loadStudents();
+  }
+
+  function backToClubs() {
+    document.getElementById('clubSelection').classList.remove('hidden');
+    document.getElementById('attendancePage').classList.add('hidden');
+    document.getElementById('status').innerText = "";
+  }
+
+  async function loadStudents() {
+    const date = document.getElementById('attendanceDate').value;
+    if (!date || !currentClub) return;
+
+    const listDiv = document.getElementById('studentList');
+    const statusDiv = document.getElementById('listStatus');
+    listDiv.innerHTML = "";
+    statusDiv.classList.remove('hidden');
+    statusDiv.innerText = "讀取名單中...";
+    document.getElementById('submitBtn').disabled = true;
+
+    try {
+      const resp = await fetch(`${API_URL}?action=getStudents&clubName=${encodeURIComponent(currentClub)}&date=${date}`);
+      const students = await resp.json();
+      statusDiv.classList.add('hidden');
+      
+      if (students.length === 0) {
+        statusDiv.classList.remove('hidden');
+        statusDiv.innerText = "此日期無名單或已全部點完。";
+        return;
+      }
+
+      students.forEach(name => {
+        let div = document.createElement('div');
+        div.className = "student-item";
+        div.innerHTML = `<input type="checkbox" id="chk_${name}" value="${name}"><label for="chk_${name}">${name}</label>`;
+        listDiv.appendChild(div);
+      });
+      document.getElementById('submitBtn').disabled = false;
+    } catch (e) {
+      statusDiv.innerText = "載入失敗。";
+    }
+  }
+
+  async function submit() {
+    const date = document.getElementById('attendanceDate').value;
+    const password = document.getElementById('clubPassword').value;
+    const checkboxes = document.querySelectorAll('#studentList input[type="checkbox"]:checked');
+    const selectedStudents = Array.from(checkboxes).map(cb => cb.value);
+
+    if (selectedStudents.length === 0) {
+      alert("請勾選學生名單");
+      return;
+    }
+    if (!password) {
+      alert("請輸入社團密碼");
+      return;
+    }
+
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('status').style.color = "blue";
+    document.getElementById('status').innerText = "正在驗證並寫入資料...";
+
+    try {
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          clubName: currentClub,
+          date: date,
+          students: selectedStudents,
+          password: password
+        })
+      });
+      const result = await resp.json();
+      
+      if (result.status === 'success') {
+        document.getElementById('status').style.color = "green";
+        document.getElementById('status').innerText = result.message;
+        document.getElementById('clubPassword').value = ""; // 成功後清空密碼
+        setTimeout(() => {
+          document.getElementById('status').innerText = "";
+          loadStudents();
+        }, 1500);
+      } else {
+        document.getElementById('status').style.color = "red";
+        document.getElementById('status').innerText = result.message;
+        document.getElementById('submitBtn').disabled = false;
+      }
+    } catch (e) {
+      document.getElementById('status').style.color = "red";
+      document.getElementById('status').innerText = "連線失敗。";
+      document.getElementById('submitBtn').disabled = false;
+    }
+  }
 </script>
 
 </body>
