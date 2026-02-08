@@ -4,37 +4,279 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>社團安全點名系統</title>
+
   <style>
-    body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
-    .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    h2 { text-align: center; color: #1a73e8; }
-    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-    button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-    .club-btn { background-color: #e8f0fe; color: #1967d2; font-weight: bold; }
-    .submit-btn { background-color: #34a853; color: white; width: 100%; font-size: 18px; margin-top: 20px; }
-    .submit-btn:disabled { background-color: #ccc; }
-    .section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-    input[type="date"], input[type="password"] { width: 90%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
-    .student-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-    .student-item label { margin-left: 15px; flex-grow: 1; cursor: pointer; }
-    #status { text-align: center; margin-top: 15px; font-weight: bold; }
-    .hidden { display: none; }
+    :root{
+      --pink-1:#ffe4ef;
+      --pink-2:#ffd1e6;
+      --pink-3:#ffb8d8;
+      --rose:#ff6fa8;
+
+      --mint-1:#e9fff6;
+      --mint-2:#c9f5e5;
+      --mint:#3bbf9a;
+
+      --lav:#f3e9ff;
+      --cream:#fff9f2;
+
+      --text:#3b2f3a;
+      --muted:#7a6676;
+
+      --card: rgba(255,255,255,0.78);
+      --stroke: rgba(255, 160, 200, 0.35);
+      --shadow: 0 12px 35px rgba(255, 120, 170, 0.15);
+    }
+
+    *{ box-sizing: border-box; }
+
+    body{
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      padding: 20px;
+      color: var(--text);
+      min-height: 100vh;
+
+      /* 春季粉嫩背景：漸層＋淡淡花瓣感 */
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255, 195, 220, 0.45), transparent 55%),
+        radial-gradient(circle at 80% 15%, rgba(205, 245, 230, 0.45), transparent 55%),
+        radial-gradient(circle at 20% 85%, rgba(243, 233, 255, 0.55), transparent 60%),
+        radial-gradient(circle at 90% 85%, rgba(255, 249, 242, 0.9), transparent 55%),
+        linear-gradient(135deg, #fff6fb 0%, #f7fff9 45%, #fffaf3 100%);
+    }
+
+    .container{
+      max-width: 520px;
+      margin: auto;
+      padding: 26px 22px;
+      border-radius: 20px;
+
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: var(--shadow);
+
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 卡片上方淡淡花朵光暈 */
+    .container::before{
+      content:"";
+      position:absolute;
+      inset:-120px -120px auto auto;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, rgba(255, 182, 215, 0.55), transparent 60%);
+      filter: blur(6px);
+      pointer-events:none;
+    }
+
+    .container::after{
+      content:"";
+      position:absolute;
+      inset:auto auto -140px -140px;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(190, 245, 230, 0.55), transparent 60%);
+      filter: blur(6px);
+      pointer-events:none;
+    }
+
+    h2{
+      text-align:center;
+      margin: 6px 0 18px 0;
+      font-size: 26px;
+      letter-spacing: 1px;
+      color: #a23b6f;
+      text-shadow: 0 2px 0 rgba(255,255,255,0.6);
+    }
+
+    p{
+      color: var(--muted);
+    }
+
+    .btn-group{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    button{
+      padding: 12px 14px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+      font-weight: 700;
+      letter-spacing: .5px;
+      user-select: none;
+    }
+
+    button:active{
+      transform: translateY(1px) scale(0.99);
+    }
+
+    /* 社團按鈕：粉嫩花朵漸層 */
+    .club-btn{
+      background: linear-gradient(135deg, #ffe1ef 0%, #fff 55%, #e8fff7 100%);
+      color: #8d2f5e;
+      border: 1px solid rgba(255, 140, 190, 0.35);
+      box-shadow: 0 10px 18px rgba(255, 120, 170, 0.12);
+    }
+
+    .club-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 24px rgba(255, 120, 170, 0.18);
+      filter: brightness(1.02);
+    }
+
+    /* 返回按鈕：溫柔灰粉 */
+    .back-btn{
+      background: linear-gradient(135deg, #fff 0%, #fff0f7 60%, #f3f3f3 100%);
+      color: #6b5a66;
+      border: 1px solid rgba(160, 150, 160, 0.25);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+      margin-bottom: 14px;
+    }
+
+    .back-btn:hover{
+      transform: translateY(-1px);
+    }
+
+    h3{
+      margin: 6px 0 14px 0;
+      font-size: 18px;
+      color: #7b2d56;
+    }
+
+    .section{
+      background: rgba(255, 255, 255, 0.72);
+      padding: 16px 14px;
+      border-radius: 16px;
+      margin-bottom: 14px;
+      border: 1px solid var(--stroke);
+      box-shadow: 0 10px 18px rgba(255, 140, 190, 0.08);
+    }
+
+    .section label{
+      font-weight: 800;
+      color: #6f2a4e;
+    }
+
+    input[type="date"], input[type="password"]{
+      width: 100%;
+      padding: 12px 12px;
+      margin-top: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 140, 190, 0.35);
+      font-size: 16px;
+      outline: none;
+      background: rgba(255,255,255,0.85);
+      color: var(--text);
+      transition: box-shadow .2s ease, border-color .2s ease;
+    }
+
+    input[type="date"]:focus, input[type="password"]:focus{
+      border-color: rgba(255, 110, 170, 0.55);
+      box-shadow: 0 0 0 4px rgba(255, 140, 190, 0.18);
+    }
+
+    #listStatus{
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .student-item{
+      display:flex;
+      align-items:center;
+      padding: 12px 10px;
+      border-bottom: 1px dashed rgba(255, 160, 200, 0.35);
+    }
+
+    .student-item:last-child{
+      border-bottom: none;
+    }
+
+    /* checkbox 變可愛一點 */
+    .student-item input[type="checkbox"]{
+      width: 18px;
+      height: 18px;
+      accent-color: #ff6fa8;
+      cursor: pointer;
+    }
+
+    .student-item label{
+      margin-left: 12px;
+      flex-grow:1;
+      cursor:pointer;
+      font-weight: 650;
+      color: #4b2f3f;
+    }
+
+    /* 送出按鈕：春季薄荷綠漸層 */
+    .submit-btn{
+      width: 100%;
+      font-size: 18px;
+      margin-top: 14px;
+      padding: 14px 16px;
+
+      background: linear-gradient(135deg, #d8fff0 0%, #bff3e1 45%, #ffd2e7 100%);
+      color: #2c6b5b;
+
+      border: 1px solid rgba(60, 190, 155, 0.35);
+      box-shadow: 0 14px 28px rgba(60, 190, 155, 0.14);
+    }
+
+    .submit-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 18px 34px rgba(60, 190, 155, 0.18);
+      filter: brightness(1.02);
+    }
+
+    .submit-btn:disabled{
+      cursor:not-allowed;
+      opacity: 0.55;
+      transform: none;
+      box-shadow: none;
+      background: linear-gradient(135deg, #f0f0f0, #fafafa);
+      color: #888;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    #status{
+      text-align:center;
+      margin-top: 14px;
+      font-weight: 900;
+      letter-spacing: .5px;
+    }
+
+    .hidden{ display:none; }
+
+    /* 小螢幕友善 */
+    @media (max-width: 420px){
+      .btn-group{ grid-template-columns: 1fr; }
+      .container{ padding: 22px 16px; }
+    }
   </style>
 </head>
+
 <body>
 
 <div class="container">
   <h2 id="mainTitle">社團點名系統</h2>
-  
+
   <div id="clubSelection">
-    <p style="text-align:center;">請選擇社團：</p>
+    <p style="text-align:center; font-weight:700;">請選擇社團：</p>
     <div id="clubButtons" class="btn-group">讀取中...</div>
   </div>
 
   <div id="attendancePage" class="hidden">
-    <button onclick="backToClubs()" style="background:#dadce0; margin-bottom:15px;">← 返回</button>
+    <button class="back-btn" onclick="backToClubs()">← 返回</button>
     <h3 id="selectedClubName"></h3>
-    
+
     <div class="section">
       <label>1. 選擇上課日期：</label><br>
       <input type="date" id="attendanceDate">
@@ -42,7 +284,7 @@
 
     <div id="studentListContainer" class="section">
       <label>2. 勾選出席學生：</label>
-      <div id="listStatus" style="color:#666; font-size:14px; margin-top:10px;">請載入名單...</div>
+      <div id="listStatus">請載入名單...</div>
       <div id="studentList"></div>
     </div>
 
@@ -102,7 +344,7 @@
     const date = document.getElementById('attendanceDate').value;
     const listDiv = document.getElementById('studentList');
     const statusDiv = document.getElementById('listStatus');
-    
+
     listDiv.innerHTML = "";
     statusDiv.innerText = "載入名單中...";
     document.getElementById('submitBtn').disabled = true;
@@ -110,7 +352,7 @@
     try {
       const resp = await fetch(`${API_URL}?action=getStudents&clubName=${encodeURIComponent(currentClub)}&date=${date}`);
       const students = await resp.json();
-      
+
       if (students.length === 0) {
         statusDiv.innerText = "此日期已無可點名學生。";
       } else {
@@ -123,7 +365,9 @@
         });
         document.getElementById('submitBtn').disabled = false;
       }
-    } catch (e) { statusDiv.innerText = "讀取失敗。"; }
+    } catch (e) {
+      statusDiv.innerText = "讀取失敗。";
+    }
   }
 
   async function submit() {
@@ -137,7 +381,7 @@
 
     const statusObj = document.getElementById('status');
     statusObj.innerText = "驗證中...";
-    statusObj.style.color = "blue";
+    statusObj.style.color = "#a23b6f";
     document.getElementById('submitBtn').disabled = true;
 
     try {
@@ -151,10 +395,10 @@
         })
       });
       const result = await resp.json();
-      
+
       if (result.status === "success") {
         statusObj.innerText = result.message;
-        statusObj.style.color = "green";
+        statusObj.style.color = "#1a8f6d";
         document.getElementById('clubPassword').value = ""; // 成功後清空密碼
         setTimeout(() => {
           statusObj.innerText = "";
@@ -162,11 +406,12 @@
         }, 1500);
       } else {
         statusObj.innerText = result.message;
-        statusObj.style.color = "red";
+        statusObj.style.color = "#d23b6a";
         document.getElementById('submitBtn').disabled = false;
       }
     } catch (e) {
       statusObj.innerText = "連線失敗。";
+      statusObj.style.color = "#d23b6a";
       document.getElementById('submitBtn').disabled = false;
     }
   }
